@@ -10,9 +10,26 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, Trash2 } from 'lucide-react';
+import { MoreVertical, Pencil, Plus, Trash2 } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import type { Assignment } from '@/lib/types';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from '@/hooks/use-toast';
 
 const priorityVariant: { [key: string]: "destructive" | "secondary" | "outline" } = {
   'High': 'destructive',
@@ -31,6 +48,10 @@ export default function AssignmentsPage() {
   const [sortOption, setSortOption] = useState<SortOption>('dueDate');
   const [filters, setFilters] = useState<Filter>({ subject: 'all', priority: 'all' });
   const [newChecklistItem, setNewChecklistItem] = useState<Record<string, string>>({});
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
+  const [formState, setFormState] = useState<Partial<Assignment> | null>(null);
+  const { toast } = useToast();
 
   const handleChecklistItemToggle = (assignmentId: string, checklistItemId: string) => {
     setAssignments(assignments.map(assignment => {
@@ -81,6 +102,47 @@ export default function AssignmentsPage() {
       }
       return assignment;
     }));
+  };
+
+  const handleEdit = (assignment: Assignment) => {
+    setSelectedAssignment(assignment);
+    setFormState({ 
+      ...assignment, 
+      // Format for date input which expects 'YYYY-MM-DD'
+      dueDate: new Date(assignment.dueDate).toISOString().split('T')[0] 
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  const handleFormChange = (field: keyof Omit<Assignment, 'id' | 'checklist'>, value: string) => {
+    if (formState) {
+      setFormState({ ...formState, [field]: value });
+    }
+  };
+
+  const handleSave = () => {
+    if (!formState || !formState.title || !formState.subject || !formState.dueDate || !formState.priority || !formState.details) {
+      toast({ variant: 'destructive', title: "Missing fields", description: "Please fill out all fields."});
+      return;
+    }
+
+    if (selectedAssignment) {
+      setAssignments(assignments.map(a => 
+        a.id === selectedAssignment.id 
+        ? { 
+            ...a, 
+            ...formState, 
+            // Convert date back to ISO string on save
+            dueDate: new Date(formState.dueDate!).toISOString() 
+          } as Assignment 
+        : a
+      ));
+      toast({ title: "Assignment updated", description: "Your assignment has been updated." });
+    }
+    
+    setIsEditDialogOpen(false);
+    setFormState(null);
+    setSelectedAssignment(null);
   };
 
   const filteredAndSortedAssignments = useMemo(() => {
@@ -149,7 +211,22 @@ export default function AssignmentsPage() {
               <CardHeader>
                 <div className="flex justify-between items-start">
                   <CardTitle className="text-lg">{assignment.title}</CardTitle>
-                  <Badge variant={priorityVariant[assignment.priority]}>{assignment.priority}</Badge>
+                  <div className="flex items-center gap-1">
+                    <Badge variant={priorityVariant[assignment.priority]}>{assignment.priority}</Badge>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-7 w-7">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => handleEdit(assignment)}>
+                          <Pencil className="mr-2 h-4 w-4" />
+                          <span>Edit</span>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
                 </div>
                 <CardDescription>{assignment.subject}</CardDescription>
               </CardHeader>
@@ -208,6 +285,56 @@ export default function AssignmentsPage() {
           <p className="text-muted-foreground mt-2">Try adjusting your filters or enjoy the free time!</p>
         </div>
       )}
+
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Assignment</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="title" className="text-right">Title</Label>
+              <Input id="title" value={formState?.title || ''} onChange={(e) => handleFormChange('title', e.target.value)} className="col-span-3" />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="subject" className="text-right">Subject</Label>
+              <Select value={formState?.subject || ''} onValueChange={(value) => handleFormChange('subject', value)}>
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="Select a subject" />
+                </SelectTrigger>
+                <SelectContent>
+                  {subjects.map(s => <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="details" className="text-right">Details</Label>
+              <Textarea id="details" value={formState?.details || ''} onChange={(e) => handleFormChange('details', e.target.value)} className="col-span-3" />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="dueDate" className="text-right">Due Date</Label>
+              <Input id="dueDate" type="date" value={formState?.dueDate || ''} onChange={(e) => handleFormChange('dueDate', e.target.value)} className="col-span-3" />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="priority" className="text-right">Priority</Label>
+              <Select value={formState?.priority || ''} onValueChange={(value) => handleFormChange('priority', value)}>
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="Select priority" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="High">High</SelectItem>
+                  <SelectItem value="Medium">Medium</SelectItem>
+                  <SelectItem value="Low">Low</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
+            <Button onClick={handleSave}>Save Changes</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
