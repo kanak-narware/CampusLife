@@ -12,40 +12,44 @@ export default function AttendancePage() {
   const [subjects, setSubjects] = useState<Subject[]>(initialSubjects);
   const { toast } = useToast();
 
-  const handleAttendance = (subjectId: string, status: 'present' | 'absent') => {
+  const handleAttendance = (subjectId: string, action: 'increment' | 'decrement') => {
     setSubjects(prevSubjects =>
       prevSubjects.map(subject => {
         if (subject.id === subjectId) {
-          const newAttended = status === 'present' ? Math.min(subject.attendedClasses + 1, subject.totalClasses) : subject.attendedClasses;
-          const newTotal = subject.totalClasses + 1;
-          
-          // For this example, let's just increment both attended and total for 'present' and only total for 'absent'
-          // A real app might handle this differently (e.g., only one action per day)
-          
-          if(status === 'present' && subject.attendedClasses < subject.totalClasses) {
-             toast({
-              title: `Marked Present for ${subject.name}`,
-              description: `Your attendance has been updated.`,
-            });
-            return { ...subject, attendedClasses: subject.attendedClasses + 1 };
+          let updatedAttendedClasses = subject.attendedClasses;
+          if (action === 'increment') {
+            if (subject.attendedClasses < subject.totalClasses) {
+              updatedAttendedClasses++;
+              toast({
+                title: `Marked Present for ${subject.name}`,
+                description: `You have now attended ${updatedAttendedClasses} of ${subject.totalClasses} classes.`,
+              });
+            } else {
+              toast({
+                title: 'Maximum attendance reached',
+                description: 'Cannot attend more classes than the total.',
+                variant: 'destructive',
+              });
+              return subject; // No change
+            }
+          } else { // decrement
+            if (subject.attendedClasses > 0) {
+              updatedAttendedClasses--;
+               toast({
+                title: `Marked Absent for ${subject.name}`,
+                variant: 'destructive',
+                description: `You have now attended ${updatedAttendedClasses} of ${subject.totalClasses} classes. This removes one attended class.`,
+              });
+            } else {
+              toast({
+                title: 'Minimum attendance reached',
+                description: 'Cannot have less than 0 attended classes.',
+                variant: 'destructive',
+              });
+              return subject; // No change
+            }
           }
-          if(status === 'absent' && subject.attendedClasses > 0){
-             toast({
-              title: `Marked Absent for ${subject.name}`,
-              variant: 'destructive',
-              description: `Your attendance has been updated.`,
-            });
-            // This is a simplification. Marking absent shouldn't decrease attended classes,
-            // but might decrease percentage. Let's assume total classes remains a plan and we only track attended.
-            // For UI feedback, let's just show the toast. In a real app, this logic would be more complex.
-            // Let's not change numbers for absent to avoid confusion.
-            return { ...subject };
-          }
-           toast({
-              title: `Attendance for ${subject.name} Unchanged`,
-              description: `No change was recorded.`,
-            });
-          return subject;
+          return { ...subject, attendedClasses: updatedAttendedClasses };
         }
         return subject;
       })
@@ -80,11 +84,11 @@ export default function AttendancePage() {
                 </div>
               </CardContent>
               <CardFooter className="grid grid-cols-2 gap-2">
-                <Button variant="outline" onClick={() => handleAttendance(subject.id, 'present')}>
+                <Button variant="outline" onClick={() => handleAttendance(subject.id, 'increment')}>
                   <Check className="mr-2 h-4 w-4" />
                   Present
                 </Button>
-                <Button variant="destructive" onClick={() => handleAttendance(subject.id, 'absent')}>
+                <Button variant="destructive" onClick={() => handleAttendance(subject.id, 'decrement')}>
                   <X className="mr-2 h-4 w-4" />
                   Absent
                 </Button>
