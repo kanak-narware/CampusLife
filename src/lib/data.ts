@@ -1,4 +1,4 @@
-import type { Subject, Assignment, TimetableEntry } from './types';
+import type { Subject, Assignment, TimetableEntry, ChecklistItem } from './types';
 
 export const subjects: Subject[] = [
   { id: 'subj-1', name: 'Advanced Calculus', teacher: 'Dr. Evelyn Reed', totalClasses: 20, attendedClasses: 18 },
@@ -15,7 +15,12 @@ export const assignments: Assignment[] = [
     subject: 'Advanced Calculus',
     dueDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
     priority: 'High',
-    details: 'Complete exercises 4.1-4.5 from the textbook. Show all work for partial credit.'
+    details: 'Complete exercises 4.1-4.5 from the textbook. Show all work for partial credit.',
+    checklist: [
+      { id: 'cl-1-1', text: 'Solve exercise 4.1', completed: true },
+      { id: 'cl-1-2', text: 'Solve exercise 4.2', completed: false },
+      { id: 'cl-1-3', text: 'Review chapter on integrals', completed: false },
+    ]
   },
   {
     id: 'assign-2',
@@ -23,7 +28,12 @@ export const assignments: Assignment[] = [
     subject: 'Quantum Physics',
     dueDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
     priority: 'High',
-    details: 'Analyze experimental data and write a 10-page report on the findings.'
+    details: 'Analyze experimental data and write a 10-page report on the findings.',
+    checklist: [
+      { id: 'cl-2-1', text: 'Draft introduction', completed: true },
+      { id: 'cl-2-2', text: 'Analyze data from experiment A', completed: false },
+      { id: 'cl-2-3', text: 'Write conclusion', completed: false },
+    ]
   },
   {
     id: 'assign-3',
@@ -39,7 +49,13 @@ export const assignments: Assignment[] = [
     subject: 'Data Structures',
     dueDate: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000).toISOString(),
     priority: 'Medium',
-    details: 'Implement a balanced binary search tree in Java or Python.'
+    details: 'Implement a balanced binary search tree in Java or Python.',
+    checklist: [
+        { id: 'cl-4-1', text: 'Implement Node class', completed: true },
+        { id: 'cl-4-2', text: 'Implement insert method', completed: true },
+        { id: 'cl-4-3', text: 'Implement balancing logic', completed: false },
+        { id: 'cl-4-4', text: 'Write test cases', completed: false },
+    ]
   },
   {
     id: 'assign-5',

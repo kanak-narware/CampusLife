@@ -14,6 +14,12 @@ export type TimetableEntry = {
   location: string;
 };
 
+export type ChecklistItem = {
+  id: string;
+  text: string;
+  completed: boolean;
+};
+
 export type Assignment = {
   id: string;
   title: string;
@@ -21,4 +27,5 @@ export type Assignment = {
   dueDate: string;
   priority: 'High' | 'Medium' | 'Low';
   details: string;
+  checklist?: ChecklistItem[];
 };

@@ -7,6 +7,12 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from '@/components/ui/badge';
 import { format, formatDistanceToNow } from 'date-fns';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Plus, Trash2 } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
+import type { Assignment } from '@/lib/types';
 
 const priorityVariant: { [key: string]: "destructive" | "secondary" | "outline" } = {
   'High': 'destructive',
@@ -21,11 +27,64 @@ type Filter = {
 };
 
 export default function AssignmentsPage() {
+  const [assignments, setAssignments] = useState<Assignment[]>(allAssignments);
   const [sortOption, setSortOption] = useState<SortOption>('dueDate');
   const [filters, setFilters] = useState<Filter>({ subject: 'all', priority: 'all' });
+  const [newChecklistItem, setNewChecklistItem] = useState<Record<string, string>>({});
+
+  const handleChecklistItemToggle = (assignmentId: string, checklistItemId: string) => {
+    setAssignments(assignments.map(assignment => {
+      if (assignment.id === assignmentId) {
+        return {
+          ...assignment,
+          checklist: assignment.checklist?.map(item => {
+            if (item.id === checklistItemId) {
+              return { ...item, completed: !item.completed };
+            }
+            return item;
+          })
+        };
+      }
+      return assignment;
+    }));
+  };
+
+  const handleAddChecklistItem = (assignmentId: string) => {
+    const text = newChecklistItem[assignmentId]?.trim();
+    if (!text) return;
+
+    setAssignments(assignments.map(assignment => {
+      if (assignment.id === assignmentId) {
+        const newItem = {
+          id: `cl-${assignment.id}-${Date.now()}`,
+          text,
+          completed: false,
+        };
+        return {
+          ...assignment,
+          checklist: [...(assignment.checklist || []), newItem],
+        };
+      }
+      return assignment;
+    }));
+
+    setNewChecklistItem({ ...newChecklistItem, [assignmentId]: '' });
+  };
+
+  const handleDeleteChecklistItem = (assignmentId: string, checklistItemId: string) => {
+    setAssignments(assignments.map(assignment => {
+      if (assignment.id === assignmentId) {
+        return {
+          ...assignment,
+          checklist: assignment.checklist?.filter(item => item.id !== checklistItemId),
+        };
+      }
+      return assignment;
+    }));
+  };
 
   const filteredAndSortedAssignments = useMemo(() => {
-    let filtered = [...allAssignments];
+    let filtered = [...assignments];
 
     if (filters.subject !== 'all') {
       filtered = filtered.filter(a => a.subject === filters.subject);
@@ -43,7 +102,7 @@ export default function AssignmentsPage() {
     }
 
     return filtered;
-  }, [sortOption, filters]);
+  }, [sortOption, filters, assignments]);
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6">
@@ -96,6 +155,43 @@ export default function AssignmentsPage() {
               </CardHeader>
               <CardContent className="flex-grow">
                 <p className="text-sm text-muted-foreground">{assignment.details}</p>
+                {assignment.checklist && (
+                  <>
+                    <Separator className="my-4" />
+                    <div className="space-y-3">
+                      <h4 className="text-sm font-semibold">Checklist</h4>
+                      {assignment.checklist.map(item => (
+                        <div key={item.id} className="flex items-center gap-2">
+                          <Checkbox
+                            id={`item-${item.id}`}
+                            checked={item.completed}
+                            onCheckedChange={() => handleChecklistItemToggle(assignment.id, item.id)}
+                          />
+                          <label
+                            htmlFor={`item-${item.id}`}
+                            className={`flex-grow text-sm ${item.completed ? 'text-muted-foreground line-through' : ''}`}
+                          >
+                            {item.text}
+                          </label>
+                          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleDeleteChecklistItem(assignment.id, item.id)}>
+                            <Trash2 className="h-4 w-4 text-muted-foreground" />
+                          </Button>
+                        </div>
+                      ))}
+                      <div className="flex items-center gap-2 mt-2">
+                        <Input
+                          placeholder="Add new item..."
+                          value={newChecklistItem[assignment.id] || ''}
+                          onChange={(e) => setNewChecklistItem({ ...newChecklistItem, [assignment.id]: e.target.value })}
+                          onKeyDown={(e) => e.key === 'Enter' && handleAddChecklistItem(assignment.id)}
+                        />
+                        <Button size="icon" onClick={() => handleAddChecklistItem(assignment.id)}>
+                          <Plus className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </>
+                )}
               </CardContent>
               <CardFooter>
                 <div className="text-sm">
