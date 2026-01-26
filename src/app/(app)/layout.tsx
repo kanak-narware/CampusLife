@@ -74,9 +74,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                       <Logo className="w-6 h-6 text-primary" />
                       <span className="text-lg font-semibold font-headline">CampusLife</span>
                   </div>
-                  <SidebarTrigger asChild>
-                      <Button variant="ghost" size="icon"><PanelLeft /></Button>
-                  </SidebarTrigger>
+                  <SidebarTrigger />
                </div>
             </header>
           )}
