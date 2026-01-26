@@ -1,25 +1,10 @@
 'use client';
 import {
   Auth,
-  GoogleAuthProvider,
-  signInWithPopup,
   signOut,
   User,
 } from 'firebase/auth';
 import { doc, getDoc, setDoc, Firestore, serverTimestamp } from 'firebase/firestore';
-
-const provider = new GoogleAuthProvider();
-
-export async function signInWithGoogle(auth: Auth, db: Firestore) {
-  try {
-    const result = await signInWithPopup(auth, provider);
-    await createUserDocuments(result.user, db);
-  } catch (error) {
-    console.error('Error during sign-in:', error);
-    // Re-throw the error to allow the UI to handle it.
-    throw error;
-  }
-}
 
 export async function signOutUser(auth: Auth) {
   try {
@@ -44,7 +29,6 @@ export async function createUserDocuments(user: User, db: Firestore) {
 
     await setDoc(userAccountRef, {
       id: uid,
-      googleId: user.providerData.find(p => p.providerId === 'google.com')?.uid,
       email,
       firstName,
       lastName,
