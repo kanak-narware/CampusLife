@@ -12,7 +12,6 @@ import {
   SidebarTrigger,
 } from '@/components/ui/sidebar';
 import { Logo } from '@/components/icons';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   LayoutDashboard,
   CalendarDays,
@@ -24,6 +23,9 @@ import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { FirebaseClientProvider, useUser } from '@/firebase';
+import { AuthGuard } from '@/components/auth-guard';
+import { UserNav } from '@/components/user-nav';
 
 const menuItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -32,67 +34,68 @@ const menuItems = [
   { href: '/attendance', label: 'Attendance', icon: CheckCircle2 },
 ];
 
-export default function AppLayout({ children }: { children: React.ReactNode }) {
+function AppLayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isMobile = useIsMobile();
+  const { user, isUserLoading } = useUser();
 
   return (
-    <SidebarProvider>
-      <Sidebar>
-        <SidebarHeader>
-          <div className="flex items-center gap-2">
-            <Logo className="w-6 h-6 text-primary" />
-            <span className="text-lg font-semibold font-headline">CampusLife</span>
-          </div>
-        </SidebarHeader>
-        <SidebarContent>
-          <SidebarMenu>
-            {menuItems.map((item) => (
-              <SidebarMenuItem key={item.href}>
-                <Link href={item.href} passHref>
-                  <SidebarMenuButton
-                    isActive={pathname === item.href}
-                    tooltip={item.label}
-                  >
-                    <item.icon />
-                    <span>{item.label}</span>
-                  </SidebarMenuButton>
-                </Link>
-              </SidebarMenuItem>
-            ))}
-          </SidebarMenu>
-        </SidebarContent>
-        <SidebarFooter>
-          <div className="flex items-center gap-3">
-            <Avatar className="h-9 w-9">
-              <AvatarImage src="https://picsum.photos/seed/user/40/40" alt="User Avatar" />
-              <AvatarFallback>U</AvatarFallback>
-            </Avatar>
-            <div className="flex flex-col">
-              <span className="text-sm font-medium">Alex Doe</span>
-              <span className="text-xs text-muted-foreground">
-                alex.doe@university.edu
-              </span>
+    <AuthGuard>
+      <SidebarProvider>
+        <Sidebar>
+          <SidebarHeader>
+            <div className="flex items-center gap-2">
+              <Logo className="w-6 h-6 text-primary" />
+              <span className="text-lg font-semibold font-headline">CampusLife</span>
             </div>
-          </div>
-        </SidebarFooter>
-      </Sidebar>
-      <SidebarInset>
-        {isMobile && (
-          <header className="p-4 border-b bg-card">
-             <div className="flex justify-between items-center">
-                <div className="flex items-center gap-2">
-                    <Logo className="w-6 h-6 text-primary" />
-                    <span className="text-lg font-semibold font-headline">CampusLife</span>
-                </div>
-                <SidebarTrigger asChild>
-                    <Button variant="ghost" size="icon"><PanelLeft /></Button>
-                </SidebarTrigger>
-             </div>
-          </header>
-        )}
-        <main>{children}</main>
-      </SidebarInset>
-    </SidebarProvider>
+          </SidebarHeader>
+          <SidebarContent>
+            <SidebarMenu>
+              {menuItems.map((item) => (
+                <SidebarMenuItem key={item.href}>
+                  <Link href={item.href} passHref>
+                    <SidebarMenuButton
+                      isActive={pathname === item.href}
+                      tooltip={item.label}
+                    >
+                      <item.icon />
+                      <span>{item.label}</span>
+                    </SidebarMenuButton>
+                  </Link>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarContent>
+          <SidebarFooter>
+            <UserNav />
+          </SidebarFooter>
+        </Sidebar>
+        <SidebarInset>
+          {isMobile && (
+            <header className="p-4 border-b bg-card">
+               <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-2">
+                      <Logo className="w-6 h-6 text-primary" />
+                      <span className="text-lg font-semibold font-headline">CampusLife</span>
+                  </div>
+                  <SidebarTrigger asChild>
+                      <Button variant="ghost" size="icon"><PanelLeft /></Button>
+                  </SidebarTrigger>
+               </div>
+            </header>
+          )}
+          <main>{children}</main>
+        </SidebarInset>
+      </SidebarProvider>
+    </AuthGuard>
+  );
+}
+
+
+export default function AppLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <FirebaseClientProvider>
+      <AppLayoutContent>{children}</AppLayoutContent>
+    </FirebaseClientProvider>
   );
 }

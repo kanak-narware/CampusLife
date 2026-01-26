@@ -56,13 +56,13 @@
           "type": "string",
           "description": "Reference to UserAccount. (Relationship: UserAccount 1:1 UserProfile)"
         },
-        "major": {
-          "type": "string",
-          "description": "User's major or field of study."
+        "age": {
+          "type": "number",
+          "description": "User's age."
         },
-        "university": {
+        "mobileNumber": {
           "type": "string",
-          "description": "Name of the university or college the user attends."
+          "description": "User's mobile phone number."
         },
         "profilePictureUrl": {
           "type": "string",
@@ -72,16 +72,13 @@
       },
       "required": [
         "id",
-        "userAccountId",
-        "major",
-        "university"
+        "userAccountId"
       ]
     }
   },
   "auth": {
     "providers": [
-      "password",
-      "anonymous"
+      "google.com"
     ]
   },
   "firestore": {
@@ -103,7 +100,7 @@
         }
       },
       {
-        "path": "/userAccounts/{userAccountId}/userProfile",
+        "path": "/userAccounts/{userAccountId}/userProfile/{profileId}",
         "definition": {
           "entityName": "UserProfile",
           "schema": {
@@ -114,11 +111,15 @@
             {
               "name": "userAccountId",
               "description": "The unique ID of the user account that owns this profile."
+            },
+            {
+              "name": "profileId",
+              "description": "The unique ID of the user profile; should match the userAccountId."
             }
           ]
         }
       }
     ],
-    "reasoning": "The Firestore structure is designed to manage user accounts and profiles for the CampusLife Navigator application. It prioritizes clear separation of data and explicit ownership for security. User accounts are stored in the `/userAccounts` collection, while user profiles are stored in `/userAccounts/{userAccountId}/userProfile`. This design facilitates simple and robust security rules based on user authentication. Specifically:\n\n1.  **/userAccounts Collection:**\n    *   Stores core user account information, including Google ID, email, name, and join date.\n    *   Documents in this collection are intended to be created upon user signup/login.\n    *   Security rules should ensure that only the user with the matching `id` (derived from `request.auth.uid`) can read or write to their own document.\n\n2.  **/userAccounts/{userAccountId}/userProfile Subcollection:**\n    *   Stores extended user profile information, such as major, university, and profile picture URL.\n    *   Uses a subcollection to establish a clear ownership relationship: each `userProfile` belongs to a specific `userAccount`.\n    *   Security rules should enforce that only the user who owns the parent `userAccount` can read or write to the `userProfile` document.\n\nThis structure achieves Authorization Independence because access control is directly tied to the user's `uid` (either via the document ID in `/userAccounts` or via the `userAccountId` in `/userProfile`), avoiding the need for complex `get()` calls in security rules. It also supports the QAPs by ensuring that listing operations are inherently secure, as each collection or subcollection contains data with uniform access requirements."
+    "reasoning": "The Firestore structure is designed to manage user accounts and profiles for the CampusLife Navigator application. It prioritizes clear separation of data and explicit ownership for security. User accounts are stored in the `/userAccounts` collection, while user profiles are stored in `/userAccounts/{userAccountId}/userProfile`. This design facilitates simple and robust security rules based on user authentication. Specifically:\n\n1.  **/userAccounts Collection:**\n    *   Stores core user account information, including Google ID, email, name, and join date.\n    *   Documents in this collection are intended to be created upon user signup/login.\n    *   Security rules should ensure that only the user with the matching `id` (derived from `request.auth.uid`) can read or write to their own document.\n\n2.  **/userAccounts/{userAccountId}/userProfile Subcollection:**\n    *   Stores extended user profile information, such as age and mobile number.\n    *   Uses a subcollection to establish a clear ownership relationship: each `userProfile` belongs to a specific `userAccount`.\n    *   Security rules should enforce that only the user who owns the parent `userAccount` can read or write to the `userProfile` document. A single profile document is expected per user where the `profileId` matches the `userAccountId`.\n\nThis structure achieves Authorization Independence because access control is directly tied to the user's `uid` (either via the document ID in `/userAccounts` or via the `userAccountId` in `/userProfile`), avoiding the need for complex `get()` calls in security rules. It also supports the QAPs by ensuring that listing operations are inherently secure, as each collection or subcollection contains data with uniform access requirements."
   }
 }
