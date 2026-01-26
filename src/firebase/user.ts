@@ -16,7 +16,8 @@ export async function signInWithGoogle(auth: Auth, db: Firestore) {
     await createUserDocuments(result.user, db);
   } catch (error) {
     console.error('Error during sign-in:', error);
-    // Handle error appropriately in the UI
+    // Re-throw the error to allow the UI to handle it.
+    throw error;
   }
 }
 
