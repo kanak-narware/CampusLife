@@ -23,9 +23,8 @@ import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { FirebaseClientProvider, useUser } from '@/firebase';
-import { AuthGuard } from '@/components/auth-guard';
-import { UserNav } from '@/components/user-nav';
+import { FirebaseClientProvider } from '@/firebase';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 const menuItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -37,10 +36,8 @@ const menuItems = [
 function AppLayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isMobile = useIsMobile();
-  const { user, isUserLoading } = useUser();
 
   return (
-    <AuthGuard>
       <SidebarProvider>
         <Sidebar>
           <SidebarHeader>
@@ -67,7 +64,7 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
             </SidebarMenu>
           </SidebarContent>
           <SidebarFooter>
-            <UserNav />
+            <ThemeToggle />
           </SidebarFooter>
         </Sidebar>
         <SidebarInset>
@@ -87,7 +84,6 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
           <main>{children}</main>
         </SidebarInset>
       </SidebarProvider>
-    </AuthGuard>
   );
 }
 
