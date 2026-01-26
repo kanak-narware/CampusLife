@@ -1,0 +1,116 @@
+/**
+ * Core Philosophy: This ruleset enforces a strict user-ownership model where all data is private to the user who created it.
+ * Data Structure: The data is organized hierarchically. Each user has a primary document in `/userAccounts/{userAccountId}`. All other user-specific data, such as their profile, is stored in subcollections under their primary document (e.g., `/userAccounts/{userAccountId}/userProfile/{profileId}`).
+ * Key Security Decisions:
+ * - User data is strictly private. A user can only access documents within their own data tree (i.e., paths starting with `/userAccounts/{request.auth.uid}`).
+ * - User enumeration is explicitly blocked by disallowing `list` operations on the top-level `/userAccounts` collection.
+ * - All write operations (`create`, `update`, `delete`) require user authentication and ownership verification.
+ * Denormalization for Authorization: This ruleset relies on the path structure for authorization. By nesting a user's data under a document ID that matches their UID, we can write simple, fast, and secure rules like `isOwner(userAccountId)` without needing to read other documents using `get()`.
+ * Structural Segregation: The separation of `UserAccount` (core identity) and `UserProfile` (optional details) into a document and a subcollection follows best practices for organizing user data with different access or management needs.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ------------------------------------------------------------------------
+    // Helper Functions
+    // ------------------------------------------------------------------------
+
+    /**
+     * Checks if the user is authenticated.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * Checks if the currently authenticated user's UID matches the provided userId.
+     * This is the primary function for verifying document ownership.
+     */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /**
+     * Ensures an operation is performed by the document owner and that the document
+     * already exists. This is crucial for safe update and delete operations.
+     */
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource != null;
+    }
+
+    /**
+     * Validates required data integrity fields on UserAccount creation.
+     * In prototyping mode, we only validate fields critical for authorization
+     * and relational integrity, ensuring the document's internal ID matches the
+     * user's auth UID.
+     */
+    function hasValidUserAccountData(userAccountId) {
+      let data = request.resource.data;
+      return data.id == userAccountId;
+    }
+
+    /**
+     * Ensures critical relational fields on a UserAccount document are immutable.
+     * The document's internal ID must never change after creation.
+     */
+    function isUserAccountDataImmutable() {
+      return request.resource.data.id == resource.data.id;
+    }
+
+    /**
+     * Validates required data integrity fields on UserProfile creation.
+     * Ensures the profile is correctly linked to the parent user account.
+     */
+    function hasValidUserProfileData(userAccountId) {
+      let data = request.resource.data;
+      return data.userAccountId == userAccountId;
+    }
+
+    /**
+     * Ensures critical relational fields on a UserProfile document are immutable.
+     * The profile's link to its parent user account must never change.
+     */
+    function isUserProfileDataImmutable() {
+      return request.resource.data.userAccountId == resource.data.userAccountId;
+    }
+
+    // ------------------------------------------------------------------------
+    // Collection Rules
+    // ------------------------------------------------------------------------
+
+    /**
+     * @description Manages core user account documents. Only the owner of an
+     *   account can read or write to it. Listing all users is forbidden.
+     * @path /userAccounts/{userAccountId}
+     * @allow (get) A signed-in user ('user_abc') requests their own document at `/userAccounts/user_abc`.
+     * @deny (list) Any user attempts to list documents in `/userAccounts`.
+     * @deny (get) A user ('user_xyz') tries to read another user's document at `/userAccounts/user_abc`.
+     * @principle Restricts access to a user's own data tree and prevents user enumeration.
+     */
+    match /userAccounts/{userAccountId} {
+      allow get: if isOwner(userAccountId);
+      allow list: if false;
+      allow create: if isOwner(userAccountId) && hasValidUserAccountData(userAccountId);
+      allow update: if isExistingOwner(userAccountId) && isUserAccountDataImmutable();
+      allow delete: if isExistingOwner(userAccountId);
+    }
+
+    /**
+     * @description Manages user profile documents, which are stored in a
+     *   subcollection under the parent user account. Access is inherited from the parent.
+     * @path /userAccounts/{userAccountId}/userProfile/{profileId}
+     * @allow (create) A signed-in user ('user_abc') creates a profile at `/userAccounts/user_abc/userProfile/my_profile`.
+     * @allow (list) A signed-in user ('user_abc') lists their own profiles at `/userAccounts/user_abc/userProfile`.
+     * @deny (get) A user ('user_xyz') tries to read a profile at `/userAccounts/user_abc/userProfile/my_profile`.
+     * @principle Enforces inherited ownership from a parent document in the path.
+     */
+    match /userAccounts/{userAccountId}/userProfile/{profileId} {
+      allow get: if isOwner(userAccountId);
+      allow list: if isOwner(userAccountId);
+      allow create: if isOwner(userAccountId) && hasValidUserProfileData(userAccountId);
+      allow update: if isExistingOwner(userAccountId) && isUserProfileDataImmutable();
+      allow delete: if isExistingOwner(userAccountId);
+    }
+  }
+}

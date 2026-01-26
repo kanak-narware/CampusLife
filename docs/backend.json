@@ -1,0 +1,124 @@
+{
+  "entities": {
+    "UserAccount": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserAccount",
+      "type": "object",
+      "description": "Stores user account information, linked to Google account for login.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user account."
+        },
+        "googleId": {
+          "type": "string",
+          "description": "The Google ID associated with the user account."
+        },
+        "email": {
+          "type": "string",
+          "description": "Email address of the user.",
+          "format": "email"
+        },
+        "firstName": {
+          "type": "string",
+          "description": "First name of the user."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "Last name of the user."
+        },
+        "dateJoined": {
+          "type": "string",
+          "description": "The date and time when the user joined.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "googleId",
+        "email",
+        "firstName",
+        "lastName",
+        "dateJoined"
+      ]
+    },
+    "UserProfile": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserProfile",
+      "type": "object",
+      "description": "Stores user profile information, extending the basic account details.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user profile."
+        },
+        "userAccountId": {
+          "type": "string",
+          "description": "Reference to UserAccount. (Relationship: UserAccount 1:1 UserProfile)"
+        },
+        "major": {
+          "type": "string",
+          "description": "User's major or field of study."
+        },
+        "university": {
+          "type": "string",
+          "description": "Name of the university or college the user attends."
+        },
+        "profilePictureUrl": {
+          "type": "string",
+          "description": "URL to the user's profile picture.",
+          "format": "uri"
+        }
+      },
+      "required": [
+        "id",
+        "userAccountId",
+        "major",
+        "university"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/userAccounts/{userAccountId}",
+        "definition": {
+          "entityName": "UserAccount",
+          "schema": {
+            "$ref": "#/backend/entities/UserAccount"
+          },
+          "description": "Stores user account information. Document ID is the same as the Firebase Auth UID.",
+          "params": [
+            {
+              "name": "userAccountId",
+              "description": "The unique ID of the user account; matches the Firebase Auth UID."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/userAccounts/{userAccountId}/userProfile",
+        "definition": {
+          "entityName": "UserProfile",
+          "schema": {
+            "$ref": "#/backend/entities/UserProfile"
+          },
+          "description": "Stores extended user profile information. Located under the user's account document to enforce ownership.",
+          "params": [
+            {
+              "name": "userAccountId",
+              "description": "The unique ID of the user account that owns this profile."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to manage user accounts and profiles for the CampusLife Navigator application. It prioritizes clear separation of data and explicit ownership for security. User accounts are stored in the `/userAccounts` collection, while user profiles are stored in `/userAccounts/{userAccountId}/userProfile`. This design facilitates simple and robust security rules based on user authentication. Specifically:\n\n1.  **/userAccounts Collection:**\n    *   Stores core user account information, including Google ID, email, name, and join date.\n    *   Documents in this collection are intended to be created upon user signup/login.\n    *   Security rules should ensure that only the user with the matching `id` (derived from `request.auth.uid`) can read or write to their own document.\n\n2.  **/userAccounts/{userAccountId}/userProfile Subcollection:**\n    *   Stores extended user profile information, such as major, university, and profile picture URL.\n    *   Uses a subcollection to establish a clear ownership relationship: each `userProfile` belongs to a specific `userAccount`.\n    *   Security rules should enforce that only the user who owns the parent `userAccount` can read or write to the `userProfile` document.\n\nThis structure achieves Authorization Independence because access control is directly tied to the user's `uid` (either via the document ID in `/userAccounts` or via the `userAccountId` in `/userProfile`), avoiding the need for complex `get()` calls in security rules. It also supports the QAPs by ensuring that listing operations are inherently secure, as each collection or subcollection contains data with uniform access requirements."
+  }
+}
