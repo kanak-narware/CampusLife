@@ -7,6 +7,7 @@
  * - All write operations (`create`, `update`, `delete`) require user authentication and ownership verification.
  * Denormalization for Authorization: This ruleset relies on the path structure for authorization. By nesting a user's data under a document ID that matches their UID, we can write simple, fast, and secure rules like `isOwner(userAccountId)` without needing to read other documents using `get()`.
  * Structural Segregation: The separation of `UserAccount` (core identity) and `UserProfile` (optional details) into a document and a subcollection follows best practices for organizing user data with different access or management needs.
+ * Triggering a re-deploy to ensure provider settings are applied.
  */
 rules_version = '2';
 service cloud.firestore {
