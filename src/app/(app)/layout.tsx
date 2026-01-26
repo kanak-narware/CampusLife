@@ -23,7 +23,6 @@ import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { FirebaseClientProvider } from '@/firebase';
 import { ThemeToggle } from '@/components/theme-toggle';
 
 const menuItems = [
@@ -33,7 +32,7 @@ const menuItems = [
   { href: '/attendance', label: 'Attendance', icon: CheckCircle2 },
 ];
 
-function AppLayoutContent({ children }: { children: React.ReactNode }) {
+export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isMobile = useIsMobile();
 
@@ -84,14 +83,5 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
           <main>{children}</main>
         </SidebarInset>
       </SidebarProvider>
-  );
-}
-
-
-export default function AppLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <FirebaseClientProvider>
-      <AppLayoutContent>{children}</AppLayoutContent>
-    </FirebaseClientProvider>
   );
 }
