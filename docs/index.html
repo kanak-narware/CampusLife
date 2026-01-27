@@ -1,9 +1,129 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
- <title> CAMPUS LIFE!! </title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CampusLife</title>
+
+  <style>
+    :root {
+      --bg: #0b1220;
+      --card: #0f172a;
+      --text: #e5e7eb;
+      --muted: #94a3b8;
+      --accent: #22d3ee;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      background: radial-gradient(circle at top, #1e293b, var(--bg));
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .card {
+      max-width: 460px;
+      width: 100%;
+      background: rgba(15, 23, 42, 0.9);
+      backdrop-filter: blur(12px);
+      border-radius: 22px;
+      padding: 36px;
+      box-shadow: 0 25px 50px rgba(0,0,0,0.45);
+    }
+
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 10px;
+      letter-spacing: -0.6px;
+    }
+
+    p {
+      color: var(--muted);
+      line-height: 1.65;
+      margin-bottom: 28px;
+    }
+
+    .features {
+      display: grid;
+      gap: 14px;
+      margin-bottom: 30px;
+    }
+
+    .feature {
+      background: rgba(30, 41, 59, 0.6);
+      border-radius: 14px;
+      padding: 14px 16px;
+      font-size: 0.95rem;
+    }
+
+    .feature span {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    button {
+      width: 100%;
+      padding: 15px;
+      border-radius: 14px;
+      border: none;
+      background: linear-gradient(135deg, var(--accent), #38bdf8);
+      color: #020617;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 24px rgba(34,211,238,0.35);
+    }
+
+    footer {
+      margin-top: 26px;
+      text-align: center;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+  </style>
 </head>
+
 <body>
-<h1> CAMPUS LIFE Welcomes you! </h1>
+  <div class="card">
+    <h1>CampusLife</h1>
+    <p>
+      A student-centric campus companion designed to simplify
+      everyday academic life—so you spend less time tracking
+      and more time learning.
+    </p>
+
+    <div class="features">
+      <div class="feature">
+        <span>Attendance</span> — monitor subject-wise presence and shortages
+      </div>
+      <div class="feature">
+        <span>Assignments</span> — keep deadlines and submissions in one place
+      </div>
+      <div class="feature">
+        <span>Classes</span> — stay updated with schedules and changes
+      </div>
+    </div>
+
+    <button>Login (coming soon)</button>
+
+    <footer>
+      Student Prototype • Firebase backend in progress
+    </footer>
+  </div>
 </body>
 </html>
