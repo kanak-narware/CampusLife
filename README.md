@@ -1,4 +1,4 @@
-# Firebase Studio
+# Campus Life navigator 
 
 This is a NextJS starter in Firebase Studio.
 
